@@ -37,7 +37,7 @@ jobs:
           $fileHash = Get-FileHash -Path $_.FullName -Algorithm MD5
           $fileHashPath = [System.IO.Path]::ChangeExtension($_.FullName, '.hash')
 
-          $fileHash.Hash | Set-Content -Path $fileHashPath
+          $fileHash.Hash | Set-Content -Path $fileHashPath 
 
         }
 
