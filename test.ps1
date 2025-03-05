@@ -1,1 +1,1 @@
-﻿Write-Host "Wow Cool!" 
+﻿Write-Host "Wow Cool!"
