@@ -1,0 +1,53 @@
+name: Sign PowerShell Scripts
+
+on:
+  push:
+    paths:
+      - '**/*.ps1'
+
+jobs:
+  sign:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: 
+      run: |
+        # Decode the Base64-encoded certificate from the GitHub secret and save it as cert.pfx
+        $base64Cert = "${{ secrets.SIGNING_CERTIFICATE }}"
+        [System.IO.File]::WriteAllBytes("cert.pfx", [Convert]::FromBase64String($base64Cert))
+
+        # Import the certificate into the current user's certificate store
+        $certMeta = Import-PfxCertificate -FilePath cert.pfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -String "${{ secrets.CERT_PASSWORD }}" -AsPlainText -Force)
+        
+        # Get the cert
+        $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.HasPrivateKey -and $_.Thumbprint -eq $certMeta.Thumbprint }
+
+        # Make sure we found it
+        if (-not $cert) { throw "Signing certificate not found." }
+
+        # Sign the script
+        Get-ChildItem -Path . -Recurse -Filter '*.ps1' | ?{(Get-AuthenticodeSignature -FilePath $_.FullName).Status -in @("NotSigned", "HashMismatch")} | ForEach-Object {
+          Write-Host "Signing $($_.FullName)";
+          Set-AuthenticodeSignature -FilePath $_.FullName -Certificate $cert -HashAlgorithm Sha256
+
+          Write-Host "Creating hash file"
+          $fileHash = Get-FileHash -Path $_.FullName -Algorithm MD5
+          $fileHashPath = [System.IO.Path]::ChangeExtension($_.FullName, '.hash')
+
+          $fileHash.Hash | Set-Content -Path $fileHashPath
+
+        }
+      shell: pwsh
+
+    - name: Commit signed scripts
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add .
+        git commit -m "Signed PowerShell scripts" || echo "No changes to commit"
+        git push origin HEAD:${{ github.ref_name }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
