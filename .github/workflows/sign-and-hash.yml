@@ -41,7 +41,7 @@ jobs:
 
         }
 
-        Delete-item "cert.pfx" -Force
+        Remove-item "cert.pfx" -Force
       shell: pwsh
 
     - name: Commit signed scripts
