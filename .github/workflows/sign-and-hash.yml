@@ -40,6 +40,8 @@ jobs:
           $fileHash.Hash | Set-Content -Path $fileHashPath
 
         }
+
+        Delete-item "cert.pfx" -Force
       shell: pwsh
 
     - name: Commit signed scripts
