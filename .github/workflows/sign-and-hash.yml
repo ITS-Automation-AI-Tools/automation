@@ -34,8 +34,8 @@ jobs:
           Set-AuthenticodeSignature -FilePath $_.FullName -Certificate $cert -HashAlgorithm Sha256
 
           Write-Host "Creating hash file"
-          $fileHash = Get-FileHash -Path $_.FullName -Algorithm MD5
-          $fileHashPath = [System.IO.Path]::ChangeExtension($_.FullName, '.hash')
+          $fileHash = Get-FileHash -Path $_.FullName -Algorithm SHA256
+          $fileHashPath = "$($_.FullName).hash"
 
           $fileHash.Hash | Set-Content -Path $fileHashPath 
 
