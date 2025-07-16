@@ -37,7 +37,7 @@ try {
 } catch {
     $output = [pscustomobject]@{
         message = $_.exception.message
-        status = "failed"w
+        status = "failed"
         result = $null
     }
 }
