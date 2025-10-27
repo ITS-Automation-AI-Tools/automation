@@ -34,7 +34,7 @@ function Get-VsaAgentIds {
         $base_path = @('HKLM:\SOFTWARE\WOW6432Node\Kaseya\Agent\', 'HKLM:\SOFTWARE\Kaseya\Agent') | ?{Test-Path -Path $_}
         $vsa_instances = $base_path | Get-ChildItem -ErrorAction SilentlyContinue
         $vsa_configs = $vsa_instances | Get-ItemProperty
-        return $vsa_configs | Select @{Name="agent_id"; Expression={$_.AgentGUID}}, @{Name="machine_id";Expression={$_.MachineID}}, @{Name="server_address"; Expression={$_.ServerAddr}}, @{Name="vsa_instance"; expression={$_.PSPath | Split-Path -Leaf}}, @{Name="id_type"; Expression={"vsa"}}
+        return $vsa_configs | Select @{Name="agent_id"; Expression={[string]$_.AgentGUID}}, @{Name="machine_id";Expression={$_.MachineID}}, @{Name="server_address"; Expression={$_.ServerAddr}}, @{Name="vsa_instance"; expression={$_.PSPath | Split-Path -Leaf}}, @{Name="id_type"; Expression={"vsa"}}
 
     }
 }
@@ -42,21 +42,21 @@ function Get-VsaAgentIds {
 function Get-DattoAgentIds {  
     Process {
         $base_paths = @('HKLM:\SOFTWARE\WOW6432Node\CentraStage', 'HKLM:\SOFTWARE\CentraStage') | ?{Test-Path -Path $_}
-        return $base_paths | Get-ItemProperty | Select @{Name="agent_id"; Expression={$_.DeviceID}}, @{Name="server_address"; Expression={$_.Uri}}, @{Name="id_type"; Expression={"datto"}}
+        return $base_paths | Get-ItemProperty | Select @{Name="agent_id"; Expression={[string]$_.DeviceID}}, @{Name="server_address"; Expression={$_.Uri}}, @{Name="id_type"; Expression={"datto"}}
     }
 }
 
 function Get-VSAXAgentIds {  
     Process {
         $base_path = @('HKLM:\SOFTWARE\WOW6432Node\Kaseya\PC Monitor', 'HKLM:\SOFTWARE\Kaseya\PC Monitor') | ?{Test-Path -Path $_}
-        return $base_path | Get-ItemProperty | Select @{Name="agent_id"; Expression={$_.ComputerIdentifier}}, @{Name="server_address"; Expression={$_.CustomServerAddress}}, @{Name="id_type"; Expression={"vsa_x"}}
+        return $base_path | Get-ItemProperty | Select @{Name="agent_id"; Expression={[string]$_.ComputerIdentifier}}, @{Name="server_address"; Expression={$_.CustomServerAddress}}, @{Name="id_type"; Expression={"vsa_x"}}
     }
 }
 
 function Get-LabtechAgentIds {  
     Process {
         $base_path = @('HKLM:\SOFTWARE\WOW6432Node\LabTech\Service', 'HKLM:\SOFTWARE\LabTech\Service') | ?{Test-Path -Path $_}
-        return $base_path | Get-ItemProperty | Select @{Name="agent_id"; Expression={$_.ID}}, @{Name="server_address"; Expression={$_.'Server Address'}}, @{Name="id_type"; Expression={"labtech"}}
+        return $base_path | Get-ItemProperty | Select @{Name="agent_id"; Expression={[string]$_.ID}}, @{Name="server_address"; Expression={$_.'Server Address'}}, @{Name="id_type"; Expression={"labtech"}}
     }
 }
 
