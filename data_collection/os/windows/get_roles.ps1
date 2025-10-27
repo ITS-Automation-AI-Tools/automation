@@ -24,6 +24,7 @@ try{
     $state = [pscustomobject]@{
         name = $hostname
         serial_number = $serial_number
+        installed_overview = ($installed_features | ?{$_.Installed} | Select -ExpandProperty DisplayName ) -join ("`n")
     }
 
     $installed_features | %{ Add-Member -InputObject $state -MemberType NoteProperty -Name ([string]$_.Name -replace '-','_').ToLower() -Value $_.Installed -Force}
