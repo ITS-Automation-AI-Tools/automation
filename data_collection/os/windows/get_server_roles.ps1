@@ -94,8 +94,10 @@ try{
                                                                 @{name="role_display_name"; expression={$_.DisplayName}}, `
                                                                 @{name="role_description"; expression={$_.Description}}, `
                                                                 @{name="role_type"; expression={$_.FeatureType}}, `
-                                                                @{name="role_status"; expression={$_.InstallState}}, `
-                                                                @{name="role_installed"; expression={$_.Installed}} 
+                                                                @{name="role_status"; expression={$_.InstallState.toString()}}, `
+                                                                @{name="role_installed"; expression={$_.Installed}}, `
+                                                                @{name="role_depth"; expression={$_.Depth}}, `
+                                                                @{name="role_services"; expression={$_.SystemService}}
                 )
     }
 
