@@ -14,15 +14,64 @@
     }
 }
 
+function Get-VsaAgentIds {  
+    Process {
+        $base_path = @('HKLM:\SOFTWARE\WOW6432Node\Kaseya\Agent\', 'HKLM:\SOFTWARE\Kaseya\Agent') | ?{Test-Path -Path $_}
+        $vsa_instances = $base_path | Get-ChildItem -ErrorAction SilentlyContinue
+        $vsa_configs = $vsa_instances | Get-ItemProperty
+        return $vsa_configs | Select @{Name="agent_id"; Expression={[string]$_.AgentGUID}}, @{Name="machine_id";Expression={$_.MachineID}}, @{Name="server_address"; Expression={$_.ServerAddr}}, @{Name="vsa_instance"; expression={$_.PSPath | Split-Path -Leaf}}, @{Name="id_type"; Expression={"vsa"}}
+
+    }
+}
+
+function Get-DattoAgentIds {  
+    Process {
+        $base_paths = @('HKLM:\SOFTWARE\WOW6432Node\CentraStage', 'HKLM:\SOFTWARE\CentraStage') | ?{Test-Path -Path $_}
+        return $base_paths | Get-ItemProperty | Select @{Name="agent_id"; Expression={[string]$_.DeviceID}}, @{Name="server_address"; Expression={$_.Uri}}, @{Name="id_type"; Expression={"datto"}}
+    }
+}
+
+function Get-VSAXAgentIds {  
+    Process {
+        $base_path = @('HKLM:\SOFTWARE\WOW6432Node\Kaseya\PC Monitor', 'HKLM:\SOFTWARE\Kaseya\PC Monitor') | ?{Test-Path -Path $_}
+        return $base_path | Get-ItemProperty | Select @{Name="agent_id"; Expression={[string]$_.ComputerIdentifier}}, @{Name="server_address"; Expression={$_.CustomServerAddress}}, @{Name="id_type"; Expression={"vsa_x"}}
+    }
+}
+
+function Get-LabtechAgentIds {  
+    Process {
+        $base_path = @('HKLM:\SOFTWARE\WOW6432Node\LabTech\Service', 'HKLM:\SOFTWARE\LabTech\Service') | ?{Test-Path -Path $_}
+        return $base_path | Get-ItemProperty | Select @{Name="agent_id"; Expression={[string]$_.ID}}, @{Name="server_address"; Expression={$_.'Server Address'}}, @{Name="id_type"; Expression={"labtech"}}
+    }
+}
+
+function Get-AgentId {
+    Process {
+        $agent_ids = @(
+            Get-VsaAgentIds
+            Get-DattoAgentIds
+            Get-VSAXAgentIds
+            Get-LabtechAgentIds
+        )
+
+        return $agent_ids | Select -First 1
+    }
+}
+
 $ErrorActionPreference = "STOP"
+
 
 try{
     $serial_number = (Get-WmiObject Win32_BIOS).SerialNumber
     $hostname = Get-Hostname
     $installed_features = Get-WindowsFeature
+    $agent_id = Get-AgentId
+
 
     $state = [pscustomobject]@{
         name = $hostname
+        agent_id = $agent_id.agent_id
+        id_type = $agent_id.id_type
         serial_number = $serial_number
         installed_overview = ($installed_features | ?{$_.Installed} | Select -ExpandProperty DisplayName | Sort ) -join ("`n")
     }
@@ -49,8 +98,8 @@ $output
 # SIG # Begin signature block
 # MIIFlQYJKoZIhvcNAQcCoIIFhjCCBYICAQExDzANBglghkgBZQMEAgEFADB5Bgor
 # BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
-# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCAFQm1buQltTrjI
-# Hbla8Jt7wU0eFIzw5fWry3eFX6Fr9qCCAwowggMGMIIB7qADAgECAhAoyEyARsZY
+# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCD1QkuOQzwGC4bh
+# U+RrV+IBGP4Ks+kedX2wXkQ+ERf8yKCCAwowggMGMIIB7qADAgECAhAoyEyARsZY
 # mksZuPjiDe0aMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNVBAMMEElUUyBDb2RlIFNp
 # Z25pbmcwHhcNMjUwMzA1MjMyNzU3WhcNMjYwMzA1MjM0NzU3WjAbMRkwFwYDVQQD
 # DBBJVFMgQ29kZSBTaWduaW5nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC
@@ -70,11 +119,11 @@ $output
 # LzAbMRkwFwYDVQQDDBBJVFMgQ29kZSBTaWduaW5nAhAoyEyARsZYmksZuPjiDe0a
 # MA0GCWCGSAFlAwQCAQUAoIGEMBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJ
 # KoZIhvcNAQkDMQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQB
-# gjcCARUwLwYJKoZIhvcNAQkEMSIEIBCcjx6Sq+VxhX2AqLVRN/9nM0+gsXU8caee
-# gteHEDA8MA0GCSqGSIb3DQEBAQUABIIBAEnYFu4QWQR7t0gpcJpR9u3YTxwAW9MV
-# 5z+V5GDRGZR7DCZHOKet+0GratdWGNAu4hiLtK2EgEPhg137OcXZmQDpNKQ+FSBF
-# tqOBd6ygIr3YxQD66cAHxgnIcfQpcmkhZ7AZk7dkXoHQIXU9NV01Up/wTfNRqAjW
-# 2Uxn6hXbGsldth483SfChnDLb4bWlWM1kitZuOYNgpr9+1H0WHVCJ05EixmIlH76
-# wcTFqo70ZlthFjn/Fe173S0oEwBOkvqSkW15MjjUk9sBVolfL6ugFKjNDtdKC0jd
-# VgdOZr7RyBekNU9Gyt+VeMkylBMpFAs9CD5C7YZ+etvB4F2b8REBuIU=
+# gjcCARUwLwYJKoZIhvcNAQkEMSIEIBB45sLzA9Ewyc7MY4opdiv19/XCe8+HJzwl
+# KVX45T1sMA0GCSqGSIb3DQEBAQUABIIBAGHpU2FdWm2czHX3zH+y4eJLGNzAXXmc
+# nUbGzUSh5AYjAZzK9dB31sfpeso3o+H5bUmqRjiNng8nc4JrlLOlxDqZTjxqMW69
+# D9hhVCC6aqWJCmrgKHW5A38OA8Dgis/GUiczpn5TlOXSzfznmMPJi3AbF2XgN3LP
+# BX63NfrE3uVtexn/nRtrscys2JiGWIFIy1nRBkqk8F9IPboqftT2YEnchqdTLVni
+# 0XVMOCYMjejC8oLV2PnNrF0Pw7xzwlD8zGd/Wc/dw4oHWo1gHCpMd4sJYiiNWK8z
+# kmaix0fyobkOkSXqBNi43sJa/C0Od/ypgw0a5r553rmyNIBbivqdrQY=
 # SIG # End signature block
